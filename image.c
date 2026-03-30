@@ -3,11 +3,11 @@
 #include <time.h>
 #include "image.h"
 
-#define PIXEL(img, i, j, w) img[(i) * (w) + (j)]
+#define PIXEL(img, i, j, w) img[(i)*(w) + (j)]
 
 unsigned char *allocate_image(int width, int height)
 {
-    unsigned char *img = (unsigned char *)malloc(width * height * sizeof(unsigned char));
+    unsigned char *img = (unsigned char *)malloc(width * height);
 
     if (!img)
     {
@@ -28,12 +28,8 @@ void initialize_image(unsigned char *img, int width, int height)
     srand(time(NULL));
 
     for (int i = 0; i < height; i++)
-    {
         for (int j = 0; j < width; j++)
-        {
             PIXEL(img, i, j, width) = rand() % 256;
-        }
-    }
 }
 
 void add_salt_pepper_noise(unsigned char *img, int width, int height, float prob)
@@ -45,9 +41,7 @@ void add_salt_pepper_noise(unsigned char *img, int width, int height, float prob
             float r = (float)rand() / RAND_MAX;
 
             if (r < prob)
-            {
                 PIXEL(img, i, j, width) = (rand() % 2) ? 255 : 0;
-            }
         }
     }
 }

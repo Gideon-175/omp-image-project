@@ -14,25 +14,44 @@ int main()
     initialize_image(input, WIDTH, HEIGHT);
     add_salt_pepper_noise(input, WIDTH, HEIGHT, 0.05);
 
-    double start, end;
+    printf("\n=== Phase 3: OpenMP Box Blur Performance ===\n\n");
 
-    // Box Blur
-    start = omp_get_wtime();
-    box_blur(input, output, WIDTH, HEIGHT);
-    end = omp_get_wtime();
-    printf("Box Blur Time: %f sec\n", end - start);
+    double seq_time, par_time;
 
-    // Gaussian
-    start = omp_get_wtime();
-    gaussian_blur(input, output, WIDTH, HEIGHT);
-    end = omp_get_wtime();
-    printf("Gaussian Blur Time: %f sec\n", end - start);
+    /* ================= SEQUENTIAL BASELINE ================= */
+    double start = omp_get_wtime();
+    box_blur_seq(input, output, WIDTH, HEIGHT);
+    double end = omp_get_wtime();
 
-    // Median
-    start = omp_get_wtime();
-    median_filter(input, output, WIDTH, HEIGHT);
-    end = omp_get_wtime();
-    printf("Median Filter Time: %f sec\n", end - start);
+    seq_time = end - start;
+
+    printf("Sequential Time: %f sec\n\n", seq_time);
+
+    /* ================= PARALLEL TEST ================= */
+    int thread_counts[] = {1, 2, 4, 8};
+    int n = 4;
+
+    for (int t = 0; t < n; t++)
+    {
+        int threads = thread_counts[t];
+
+        omp_set_num_threads(threads);
+
+        start = omp_get_wtime();
+        box_blur_omp(input, output, WIDTH, HEIGHT);
+        end = omp_get_wtime();
+
+        par_time = end - start;
+
+        double speedup = seq_time / par_time;
+        double efficiency = speedup / threads;
+
+        printf("Threads: %d\n", threads);
+        printf("Time: %f sec\n", par_time);
+        printf("Speedup: %f\n", speedup);
+        printf("Efficiency: %f\n", efficiency);
+        printf("-----------------------------\n");
+    }
 
     free_image(input);
     free_image(output);
