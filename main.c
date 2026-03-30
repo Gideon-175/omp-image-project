@@ -5,6 +5,8 @@
 
 #define WIDTH 3000
 #define HEIGHT 3000
+#define FRAMES 100
+#define DEADLINE 0.016   // 16 ms
 
 int main()
 {
@@ -12,46 +14,50 @@ int main()
     unsigned char *output = allocate_image(WIDTH, HEIGHT);
 
     initialize_image(input, WIDTH, HEIGHT);
-    add_salt_pepper_noise(input, WIDTH, HEIGHT, 0.05);
 
-    printf("\n=== Phase 3: OpenMP Box Blur Performance ===\n\n");
+    int threads = 8;
+    omp_set_num_threads(threads);
 
-    double seq_time, par_time;
+    printf("\n=== Phase 4: Real-Time Frame Processing ===\n\n");
+    printf("Threads Used: %d\n", threads);
+    printf("Frames: %d\n\n", FRAMES);
 
-    /* ================= SEQUENTIAL BASELINE ================= */
-    double start = omp_get_wtime();
-    box_blur_seq(input, output, WIDTH, HEIGHT);
-    double end = omp_get_wtime();
+    double total_time = 0.0;
+    int deadline_miss = 0;
 
-    seq_time = end - start;
-
-    printf("Sequential Time: %f sec\n\n", seq_time);
-
-    /* ================= PARALLEL TEST ================= */
-    int thread_counts[] = {1, 2, 4, 8};
-    int n = 4;
-
-    for (int t = 0; t < n; t++)
+    for (int f = 0; f < FRAMES; f++)
     {
-        int threads = thread_counts[t];
+        // Add noise per frame (simulate new frame)
+        add_salt_pepper_noise(input, WIDTH, HEIGHT, 0.05);
 
-        omp_set_num_threads(threads);
+        double start = omp_get_wtime();
 
-        start = omp_get_wtime();
+        // Process frame (OpenMP box blur)
         box_blur_omp(input, output, WIDTH, HEIGHT);
-        end = omp_get_wtime();
 
-        par_time = end - start;
+        double end = omp_get_wtime();
 
-        double speedup = seq_time / par_time;
-        double efficiency = speedup / threads;
+        double frame_time = end - start;
+        total_time += frame_time;
 
-        printf("Threads: %d\n", threads);
-        printf("Time: %f sec\n", par_time);
-        printf("Speedup: %f\n", speedup);
-        printf("Efficiency: %f\n", efficiency);
-        printf("-----------------------------\n");
+        // Deadline check
+        if (frame_time > DEADLINE)
+            deadline_miss++;
+
+        // Print first few frames only (avoid clutter)
+        if (f < 5)
+        {
+            printf("Frame %d Time: %f sec\n", f, frame_time);
+        }
     }
+
+    double avg_time = total_time / FRAMES;
+    double fps = FRAMES / total_time;
+
+    printf("\n===== SUMMARY =====\n");
+    printf("Average Frame Time: %f sec\n", avg_time);
+    printf("FPS: %f\n", fps);
+    printf("Deadline Misses: %d / %d\n", deadline_miss, FRAMES);
 
     free_image(input);
     free_image(output);
