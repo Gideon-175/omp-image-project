@@ -3,33 +3,40 @@
 #include <time.h>
 #include "image.h"
 
-unsigned char **allocate_image(int width, int height)
+#define PIXEL(img, i, j, w) img[(i) * (w) + (j)]
+
+unsigned char *allocate_image(int width, int height)
 {
-    unsigned char **img = (unsigned char **)malloc(height * sizeof(unsigned char *));
-    for (int i = 0; i < height; i++)
+    unsigned char *img = (unsigned char *)malloc(width * height * sizeof(unsigned char));
+
+    if (!img)
     {
-        img[i] = (unsigned char *)malloc(width * sizeof(unsigned char));
+        printf("Memory allocation failed\n");
+        exit(1);
     }
+
     return img;
 }
 
-void free_image(unsigned char **img, int height)
+void free_image(unsigned char *img)
 {
-    for (int i = 0; i < height; i++)
-        free(img[i]);
     free(img);
 }
 
-void initialize_image(unsigned char **img, int width, int height)
+void initialize_image(unsigned char *img, int width, int height)
 {
     srand(time(NULL));
 
     for (int i = 0; i < height; i++)
+    {
         for (int j = 0; j < width; j++)
-            img[i][j] = rand() % 256;
+        {
+            PIXEL(img, i, j, width) = rand() % 256;
+        }
+    }
 }
 
-void add_salt_pepper_noise(unsigned char **img, int width, int height, float prob)
+void add_salt_pepper_noise(unsigned char *img, int width, int height, float prob)
 {
     for (int i = 0; i < height; i++)
     {
@@ -38,7 +45,9 @@ void add_salt_pepper_noise(unsigned char **img, int width, int height, float pro
             float r = (float)rand() / RAND_MAX;
 
             if (r < prob)
-                img[i][j] = (rand() % 2) ? 255 : 0;
+            {
+                PIXEL(img, i, j, width) = (rand() % 2) ? 255 : 0;
+            }
         }
     }
 }

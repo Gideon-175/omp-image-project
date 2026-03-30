@@ -6,13 +6,13 @@
 
 int main()
 {
-    unsigned char **image = allocate_image(WIDTH, HEIGHT);
+    unsigned char *image = allocate_image(WIDTH, HEIGHT);
 
     initialize_image(image, WIDTH, HEIGHT);
     add_salt_pepper_noise(image, WIDTH, HEIGHT, 0.05);
 
-    printf("Image initialized + noise added\n");
+    printf("Image + noise ready\n");
 
-    free_image(image, HEIGHT);
+    free_image(image);
     return 0;
 }
